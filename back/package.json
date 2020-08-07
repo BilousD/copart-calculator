@@ -1,0 +1,17 @@
+{
+  "name": "back",
+  "version": "1.0.0",
+  "description": "backend to copart calculator for getting and parsing copart data",
+  "main": "index.js",
+  "scripts": {
+    "start server": "node index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "yes",
+  "license": "ISC",
+  "dependencies": {
+    "axios": "^0.19.2",
+    "body-parser": "^1.19.0",
+    "express": "^4.17.1"
+  }
+}
