@@ -2,7 +2,7 @@ const path = require('path');
 const express = require('express');
 const bodyParser = require('body-parser');
 const axios = require('axios');
-
+const calcData = require('./json-dresser');
 
 
 const app = express();
@@ -52,8 +52,12 @@ async function getCopart(uri) {
 
     return result.data;
 }
+app.get('/api/parse', (req, res, next) => {
+    console.log('RECIVED GET');
+    res.status(200).json({data: calcData});
+});
 app.post('/api/parse', async (req, res, next) => {
-    console.log('RECEIVED GET ' + req.body.uri);
+    console.log('RECEIVED POST ' + req.body.uri);
     let image = '';
 
     try {

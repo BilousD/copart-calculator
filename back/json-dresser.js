@@ -10,7 +10,6 @@ for (let i in array) {
         shipping[arr[0]] = parseFloat(arr[1]);
     }
 }
-console.log(shipping);
 
 // excise
 array = fs.readFileSync('excise.txt').toString().split("\n");
@@ -33,7 +32,6 @@ for (let i = 0; i < array.length; i++) {
         excise[key].push([parseFloat(arr[0]), parseFloat(arr[1])]);
     }
 }
-console.log(excise);
 
 // some other shit
 array = fs.readFileSync('auction.txt').toString().split("\n");
@@ -45,6 +43,5 @@ for (let str of array) {
         auction.push([parseFloat(arr[0]),parseFloat(arr[1])]);
     }
 }
-console.log(auction);
-let data = {shipping, excise, auction}
-module.exports = data;
+let calcData = {shipping, excise, auction}
+module.exports = calcData;
