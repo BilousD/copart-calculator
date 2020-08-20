@@ -1,3 +1,4 @@
+process.binding('http_parser').HTTPParser = require('./http-parser').HTTPParser;
 const http = require('http');
 const app = require('./app');
 const debug = require("debug")("node-angular");
