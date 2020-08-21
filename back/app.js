@@ -43,42 +43,51 @@ async function getCopart(uri) {
     console.log(result.headers);
     console.log(result.data);
     let cookies = result.headers['set-cookie'];
-    for (let cookie of cookies) {
-        let keyValue = cookie.split(';')[0].split('=');
-        if (!keyValue[0].startsWith('___utm')) {
-            COOKIE_CACHE[keyValue[0]] = keyValue[1];
+    if (cookies) {
+        for (let cookie of cookies) {
+            let keyValue = cookie.split(';')[0].split('=');
+            if (!keyValue[0].startsWith('___utm')) {
+                COOKIE_CACHE[keyValue[0]] = keyValue[1];
+            }
         }
     }
-
     return result.data;
 }
 app.get('/api/parse', (req, res, next) => {
     console.log('RECIVED GET');
     res.status(200).json({data: calcData});
 });
-app.post('/api/parse', async (req, res, next) => {
-    console.log('RECEIVED POST ' + req.body.uri);
+
+async function fetchData(req, res, next) {
+    let response = await getCopart(`public/data/lotdetails/solr/${req.body.uri}`);
     let image = '';
 
-    try {
-        let response = await getCopart(`public/data/lotdetails/solr/${req.body.uri}`);
-
-        if (response.data) {
-            try {
-                let imgResponse = await getCopart(`public/data/lotdetails/solr/lotImages/${req.body.uri}/USA`);
-                image = imgResponse.data.imagesList.FULL_IMAGE[0].url;
-            } catch (e) {
-                console.log(e);
-            }
-            if (!image) {
-                image = response.data.lc;
-            }
-            console.log('image: ',image);
-            res.status(200).json({data: response.data.lotDetails, image: image});
-        } else {
-            // request again with new cookie
-            console.log('AAAAAAAAAAAAAAAa');
+    if (response.data) {
+        try {
+            let imgResponse = await getCopart(`public/data/lotdetails/solr/lotImages/${req.body.uri}/USA`);
+            image = imgResponse.data.imagesList.FULL_IMAGE[0].url;
+        } catch (e) {
+            console.log(e);
         }
+        if (!image) {
+            image = response.data.lc;
+        }
+        console.log('image: ',image);
+        res.status(200).json({data: response.data.lotDetails, image: image});
+    } else {
+        // request again with new cookie
+        console.log('Fetching failed, retrying');
+        await setTimeout(() => fetchData(req, res, next), 2000);
+    }
+}
+
+
+
+app.post('/api/parse', async (req, res, next) => {
+    console.log('RECEIVED POST ' + req.body.uri);
+
+    try {
+        await fetchData(req, res, next);
     } catch (e) {
         console.log(e);
         res.status(503).json({errorText: 'Could not connect to Copart'});
@@ -88,14 +97,12 @@ app.post('/api/parse', async (req, res, next) => {
 let timerId = setInterval(async () => {
     console.log('interval');
     try {
-        const result = await getCopart('');
+        const result = await getCopart('images/favicon-COPART.ico');
     } catch (e) {
         console.log('setInterval error: ');
         console.log(e);
     }
-
-
-}, 900000);
+}, 1800000);
 
 app.use((req, res, next) => {
     res.send('hello');
