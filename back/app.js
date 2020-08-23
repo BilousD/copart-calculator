@@ -65,7 +65,9 @@ async function fetchData(req, res, next) {
     if (response.data) {
         try {
             let imgResponse = await getCopart(`public/data/lotdetails/solr/lotImages/${req.body.uri}/USA`);
-            image = imgResponse.data.imagesList.FULL_IMAGE[0].url;
+            if (imgResponse.data) {
+                image = imgResponse.data.imagesList.FULL_IMAGE[0].url;
+            }
         } catch (e) {
             console.log(e);
         }
@@ -77,7 +79,7 @@ async function fetchData(req, res, next) {
     } else {
         // request again with new cookie
         console.log('Fetching failed, retrying');
-        await setTimeout(() => fetchData(req, res, next), 2000);
+        await setTimeout(() => fetchData(req, res, next), 5000);
     }
 }
 
@@ -97,7 +99,7 @@ app.post('/api/parse', async (req, res, next) => {
 let timerId = setInterval(async () => {
     console.log('interval');
     try {
-        const result = await getCopart('images/favicon-COPART.ico');
+        const result = await getCopart('g2mext/internationalShipping/1/currentStatus/41519370');
     } catch (e) {
         console.log('setInterval error: ');
         console.log(e);
