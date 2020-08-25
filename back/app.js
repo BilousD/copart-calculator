@@ -2,8 +2,8 @@ const path = require('path');
 const express = require('express');
 const bodyParser = require('body-parser');
 const axios = require('axios');
-const calcData = require('./json-dresser');
-
+const getParams = require('./json-dresser');
+const Dao = require('./dao');
 
 const app = express();
 
@@ -53,12 +53,14 @@ async function getCopart(uri) {
     }
     return result.data;
 }
-app.get('/api/parse', (req, res, next) => {
+app.get('/api/parse', async (req, res, next) => {
     console.log('RECIVED GET');
-    res.status(200).json({data: calcData});
+    const calculatedData = await getParams();
+    console.log(calculatedData)
+    res.status(200).json({data: calculatedData});
 });
 
-async function fetchData(req, res, next) {
+async function fetchData(req, res, next, retries) {
     let response = await getCopart(`public/data/lotdetails/solr/${req.body.uri}`);
     let image = '';
 
@@ -77,34 +79,48 @@ async function fetchData(req, res, next) {
         console.log('image: ',image);
         res.status(200).json({data: response.data.lotDetails, image: image});
     } else {
-        // request again with new cookie
-        console.log('Fetching failed, retrying');
-        await setTimeout(() => fetchData(req, res, next), 5000);
+        if (retries < 3) {
+            // request again with new cookie
+            console.log('Fetching failed, retrying');
+            await setTimeout(() => fetchData(req, res, next, retries), 5000);
+        } else {
+            console.log('Fetching failed, ABORTING');
+            res.status(503).set('Retry-After', '180');
+        }
     }
 }
 
-
+app.put('/api/params', async (req, res, next) => {
+    console.log('RECIEVED PUT');
+    let db = new Dao();
+    let result = await db.setParams(req.shipping, req.excise, req.auction);
+    if (result) {
+        res.status(500).json({error:result});
+    } else {
+        res.status(200);
+    }
+});
 
 app.post('/api/parse', async (req, res, next) => {
     console.log('RECEIVED POST ' + req.body.uri);
-
     try {
-        await fetchData(req, res, next);
+        let retries = 0;
+        await fetchData(req, res, next, retries);
     } catch (e) {
         console.log(e);
         res.status(503).json({errorText: 'Could not connect to Copart'});
     }
 });
-
-let timerId = setInterval(async () => {
-    console.log('interval');
-    try {
-        const result = await getCopart('g2mext/internationalShipping/1/currentStatus/41519370');
-    } catch (e) {
-        console.log('setInterval error: ');
-        console.log(e);
-    }
-}, 1800000);
+// USE THIS AS A TEST FOR WORKABILITY?
+// let timerId = setInterval(async () => {
+//     console.log('interval');
+//     try {
+//         const result = await getCopart('g2mext/internationalShipping/1/currentStatus/41519370');
+//     } catch (e) {
+//         console.log('setInterval error: ');
+//         console.log(e);
+//     }
+// }, 1800000);
 
 app.use((req, res, next) => {
     res.send('hello');
