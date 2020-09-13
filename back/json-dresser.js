@@ -1,8 +1,8 @@
 const fs = require('fs');
 const Dao = require('./dao');
+let db = new Dao();
+console.log('created new Dao object');
 async function getParameters() {
-    let db = new Dao();
-    console.log('created new Dao object');
     let params = await db.getParams();
     console.log('params:', params);
     let shippingTXT = params.shippingTXT;
@@ -16,8 +16,10 @@ async function getParameters() {
 
     return {shipping, excise, auction};
 }
-
-
+async function getRaw() {
+    let params = await db.getParams();
+    return {shipping: params.shippingTXT, excise: params.exciseTXT, auction: params.auctionTXT};
+}
 
 function getShipping(shippingTXT) {
     // shipping
@@ -71,4 +73,5 @@ function getAuction(auctionTXT) {
     }
     return auction;
 }
-module.exports = getParameters;
+module.exports.getParameters = getParameters;
+module.exports.getRaw = getRaw;

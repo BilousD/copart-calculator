@@ -27,6 +27,7 @@ class Dao {
         })});
     }
     async setParams(shipping, excise, auction) {
+        console.log('got: ' ,shipping,excise,auction);
         return new Promise((resolve, reject) => {
             db.run('UPDATE params SET shipping = ?, excise = ?, auction = ? where id = 0', [shipping, excise, auction], function(err) {
             if (err) {

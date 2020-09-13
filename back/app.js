@@ -2,7 +2,7 @@ const path = require('path');
 const express = require('express');
 const bodyParser = require('body-parser');
 const axios = require('axios');
-const getParams = require('./json-dresser');
+const misc = require('./json-dresser');
 const Dao = require('./dao');
 
 const app = express();
@@ -55,9 +55,15 @@ async function getCopart(uri) {
 }
 app.get('/api/parse', async (req, res, next) => {
     console.log('RECIVED GET');
-    const calculatedData = await getParams();
+    const calculatedData = await misc.getParameters();
     console.log(calculatedData)
     res.status(200).json({data: calculatedData});
+});
+app.get('/api/parse/raw', async (req, res, next) => {
+    console.log('RECIVED GET');
+    const rawData = await misc.getRaw();
+    console.log(rawData)
+    res.status(200).json({data: rawData});
 });
 
 async function fetchData(req, res, next, retries) {
@@ -89,15 +95,29 @@ async function fetchData(req, res, next, retries) {
         }
     }
 }
-
-app.put('/api/params', async (req, res, next) => {
-    console.log('RECIEVED PUT');
-    let db = new Dao();
-    let result = await db.setParams(req.shipping, req.excise, req.auction);
-    if (result) {
-        res.status(500).json({error:result});
+let pass = '';
+let time = 0;
+app.get('/pass', async (req, res, next) => {
+    pass = '';
+    for (let i = 0; i < 10; i++) {
+        pass = pass + Math.round(Math.random()*10);
+        time = Date.now();
+    }
+    console.log('password:');
+    console.log(pass);
+    res.status(200).json({message: 'done'});
+})
+app.put('/api/parse/params', async (req, res, next) => {
+    if (req.body.pass.trim() === 'ne48gK*fYx7uekR.' && (Date.now() - time) < 300000) {
+        let db = new Dao();
+        let result = await db.setParams(req.body.shipping, req.body.excise, req.body.auction);
+        if (result) {
+            res.status(500).json({error:result});
+        } else {
+            res.status(200);
+        }
     } else {
-        res.status(200);
+        res.status(401);
     }
 });
 
@@ -111,7 +131,7 @@ app.post('/api/parse', async (req, res, next) => {
         res.status(503).json({errorText: 'Could not connect to Copart'});
     }
 });
-// USE THIS AS A TEST FOR WORKABILITY?
+//
 // let timerId = setInterval(async () => {
 //     console.log('interval');
 //     try {
